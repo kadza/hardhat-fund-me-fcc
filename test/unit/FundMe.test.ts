@@ -29,8 +29,8 @@ describe("FundMe", async function() {
 
     describe("fund", async function() {
         it("fails if you don't sent enough ETH", async function() {
-            await expect(fundMe.fund()).to.be.revertedWith(
-                "You need to spend more ETH!"
+            await expect(fundMe.fund()).to.be.revertedWithCustomError(
+                fundMe, "FundMe__MinimumUsd"
             )
         })
 

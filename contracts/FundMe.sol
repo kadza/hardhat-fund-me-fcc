@@ -5,6 +5,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./PriceConverter.sol";
 
 error FundMe__NotOwner();
+error FundMe__MinimumUsd();
 
 //Doxygen
 
@@ -24,8 +25,12 @@ contract FundMe {
     AggregatorV3Interface private s_priceFeed;
 
     modifier onlyOwner {
-        // require(msg.sender == owner);
         if (msg.sender != i_owner) revert FundMe__NotOwner();
+        _;
+    }
+
+    modifier minimumUsd {
+        if(msg.value.getConversionRate(s_priceFeed) < MINIMUM_USD) revert FundMe__MinimumUsd();
         _;
     }
 
@@ -46,9 +51,7 @@ contract FundMe {
      *  @notice It funds the contract
      *  @dev Hi devs
      */
-    function fund() public payable {
-        require(msg.value.getConversionRate(s_priceFeed) >= MINIMUM_USD, "You need to spend more ETH!");
-        // require(PriceConverter.getConversionRate(msg.value) >= MINIMUM_USD, "You need to spend more ETH!");
+    function fund() public payable minimumUsd {
         s_addressToAmountFunded[msg.sender] += msg.value;
         s_funders.push(msg.sender);
     }
