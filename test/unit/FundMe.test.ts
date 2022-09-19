@@ -21,7 +21,7 @@ describe("FundMe", async function() {
 
     describe("constructor", async function() {
         it("sets the aggregator address correctly", async function() {
-            const response = await fundMe.priceFeed()
+            const response = await fundMe.s_priceFeed()
 
             assert.equal(response, mockV3Aggregator.address)
         })
@@ -37,14 +37,14 @@ describe("FundMe", async function() {
         it("stores ETH amount by address", async function() {
             await fundMe.fund({ value: sendValue })
 
-            const result = await fundMe.addressToAmountFunded(deployer)
+            const result = await fundMe.s_addressToAmountFunded(deployer)
             assert.equal(result.toString(), sendValue.toString())
         })
 
         it("stores funder address", async function() {
             await fundMe.fund({ value: sendValue })
 
-            const result = await fundMe.funders(0)
+            const result = await fundMe.s_funders(0)
 
             assert.equal(deployer, result)
         })
@@ -83,6 +83,53 @@ describe("FundMe", async function() {
             )
         })
 
+        it("cheaper withdraw testing ...", async function() {
+            const accounts = await ethers.getSigners()
+            for (let index = 1; index < 6; index++) {
+                const fundMeConnectedContract = fundMe.connect(accounts[index])
+                await fundMeConnectedContract.fund({ value: sendValue })
+            }
+
+            const startingFundMeBalance = await fundMe.provider.getBalance(
+                fundMe.address
+            )
+            const startingDeployerBalance = await fundMe.provider.getBalance(
+                deployer
+            )
+
+            const transactionResponse = await fundMe.cheaperWithdraw()
+            const transactionReceipt = await transactionResponse.wait(1)
+            const { gasUsed, effectiveGasPrice } = transactionReceipt
+            const gasCost = gasUsed.mul(effectiveGasPrice)
+
+            const endingFundMeBalance = await fundMe.provider.getBalance(
+                fundMe.address
+            )
+
+            const endingDeployerBalance = await fundMe.provider.getBalance(
+                deployer
+            )
+
+            assert.equal(endingFundMeBalance.toString(), "0")
+            assert.equal(
+                endingDeployerBalance.add(gasCost).toString(),
+                startingFundMeBalance.add(startingDeployerBalance).toString()
+            )
+
+            for (let index = 1; index < 6; index++) {
+                assert.equal(
+                    (
+                        await fundMe.s_addressToAmountFunded(
+                            accounts[index].address
+                        )
+                    ).toString(),
+                    "0"
+                )
+            }
+
+            assert.equal((await fundMe.s_funders).length, 0)
+        })
+
         it("allows us to withdraw ETH with multiple funders", async function() {
             const accounts = await ethers.getSigners()
             for (let index = 1; index < 6; index++) {
@@ -119,7 +166,7 @@ describe("FundMe", async function() {
             for (let index = 1; index < 6; index++) {
                 assert.equal(
                     (
-                        await fundMe.addressToAmountFunded(
+                        await fundMe.s_addressToAmountFunded(
                             accounts[index].address
                         )
                     ).toString(),
@@ -127,7 +174,7 @@ describe("FundMe", async function() {
                 )
             }
 
-            assert.equal((await fundMe.funders).length, 0)
+            assert.equal((await fundMe.s_funders).length, 0)
         })
 
         it("only allows owner to withdraw", async function() {
