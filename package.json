@@ -35,6 +35,6 @@
     "lint": "yarn solhint 'contracts/*.sol'",
     "lint:fix": "yarn solhint 'contracts/*.sol' --fix",
     "format": "yarn prettier --write .",
-    "covergage": "yarn coverage"
+    "coverage": "yarn hardhat coverage"
   }
 }
