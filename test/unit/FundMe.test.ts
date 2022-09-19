@@ -21,7 +21,7 @@ describe("FundMe", async function() {
 
     describe("constructor", async function() {
         it("sets the aggregator address correctly", async function() {
-            const response = await fundMe.s_priceFeed()
+            const response = await fundMe.getPriceFeed()
 
             assert.equal(response, mockV3Aggregator.address)
         })
@@ -37,14 +37,14 @@ describe("FundMe", async function() {
         it("stores ETH amount by address", async function() {
             await fundMe.fund({ value: sendValue })
 
-            const result = await fundMe.s_addressToAmountFunded(deployer)
+            const result = await fundMe.getAddressToAmountFunded(deployer)
             assert.equal(result.toString(), sendValue.toString())
         })
 
         it("stores funder address", async function() {
             await fundMe.fund({ value: sendValue })
 
-            const result = await fundMe.s_funders(0)
+            const result = await fundMe.getFunder(0)
 
             assert.equal(deployer, result)
         })
@@ -119,7 +119,7 @@ describe("FundMe", async function() {
             for (let index = 1; index < 6; index++) {
                 assert.equal(
                     (
-                        await fundMe.s_addressToAmountFunded(
+                        await fundMe.getAddressToAmountFunded(
                             accounts[index].address
                         )
                     ).toString(),
@@ -127,7 +127,7 @@ describe("FundMe", async function() {
                 )
             }
 
-            assert.equal((await fundMe.s_funders).length, 0)
+            await expect(fundMe.getFunder(0)).to.be.reverted
         })
 
         it("allows us to withdraw ETH with multiple funders", async function() {
@@ -166,7 +166,7 @@ describe("FundMe", async function() {
             for (let index = 1; index < 6; index++) {
                 assert.equal(
                     (
-                        await fundMe.s_addressToAmountFunded(
+                        await fundMe.getAddressToAmountFunded(
                             accounts[index].address
                         )
                     ).toString(),
@@ -174,7 +174,7 @@ describe("FundMe", async function() {
                 )
             }
 
-            assert.equal((await fundMe.s_funders).length, 0)
+            await expect(fundMe.getFunder(0)).to.be.reverted
         })
 
         it("only allows owner to withdraw", async function() {
